@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -d "./docker-stuff-ipv6-ad" ]
+if [ -d "../docker-stuff-ipv6-ad" ]
 then
     cd ./caronte
     sudo docker-compose up -d
