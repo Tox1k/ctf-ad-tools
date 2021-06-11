@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+
+  mongo:
+    image: mongo:4
+    restart: always
+    networks:
+        app_net:
+          ipv4_address: 172.16.3.3
+
+  caronte:
+    image: registry.fuo.ninja/fuomag9/yetyetanotherflagsubmitter:latest
+    depends_on:
+      - mongo
+    command: python3 main.py
+    volumes: 
+      - "./config.py:/flag_submitter/config.py"
+      - "./targets.txt:/flag_submitter/targets.txt"
+      - "./exploits/:/flag_submitter/exploits/"
+    networks:
+      app_net:
+        ipv4_address: 172.16.3.2
+
+networks: 
+  app_net:
+      driver: bridge
+      ipam: 
+          driver: default
+          config: 
+              - subnet: 172.16.3.0/24
+                gateway: 172.16.3.1
