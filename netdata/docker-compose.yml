@@ -1,0 +1,36 @@
+version: '3'
+services:
+  netdata:
+    image: netdata/netdata
+    container_name: netdata
+    hostname: example.com # set to fqdn of host
+    restart: always
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - ./netdataconfig/netdata:/etc/netdata:ro
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+    networks:
+      app_net:
+        ipv4_address: 172.16.1.2
+
+networks: 
+    app_net:
+        driver: bridge
+        ipam: 
+            driver: default
+            config: 
+                - subnet: 172.16.1.0/24
+                  gateway: 172.16.1.1
+
+volumes:
+  netdatalib:
+  netdatacache:
