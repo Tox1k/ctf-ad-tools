@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+
+  mongo:
+    image: mongo:4
+    networks:
+        app_net:
+          ipv4_address: 172.16.2.3
+    restart: always
+
+  caronte:
+    image: eciavatta/caronte:latest
+    depends_on:
+      - mongo
+    networks:
+      app_net:
+        ipv4_address: 172.16.2.2
+    command: ./caronte -mongo-host 172.16.2.3 -mongo-port 27017 -assembly_memuse_log
+
+  
+networks: 
+    app_net:
+        driver: bridge
+        ipam: 
+            driver: default
+            config: 
+                - subnet: 172.16.2.0/24
+                  gateway: 172.16.2.1
