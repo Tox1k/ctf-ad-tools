@@ -4,10 +4,6 @@
 
 ip: http://172.16.2.2:3333
 
-## flag submitter
-
-ip: http://172.16.3.2:8080
-
 
 ## netdata
 
