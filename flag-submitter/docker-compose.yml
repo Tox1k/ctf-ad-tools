@@ -7,3 +7,4 @@ services:
       - "./config.conf:/flag_submitter/config.conf"
       - "./teamsips.txt:/flag_submitter/teamsips.txt"
       - "./exploits/:/flag_submitter/exploits/"
+      - "./proto/:/flag_submitter/proto"
