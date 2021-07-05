@@ -1,0 +1,84 @@
+################################## TEMPLATE SURICATA ######################################################
+# Per le regole HTTP
+# https://suricata.readthedocs.io/en/latest/rules/http-keywords.html
+
+# Per certe keyword: 
+# https://suricata.readthedocs.io/en/suricata-6.0.0/rules/payload-keywords.html
+
+# Per le regex perl:
+# https://regex101.com/
+
+
+####### ESEMPIO DI UTILIZZO ##########
+# Se si ha un payload come 
+# GET /index.html HTTP/1.0\r\n
+
+# Match possibili:
+
+# content:"/index.html"; http_uri;
+# content:"index.html"; http_uri; content:".html"; http_uri; within: 5;
+# content:"/index.html"; http_uri; depth: 6;
+
+
+################################### PAYLOAD KEYWORDS #############################################
+# within: indica quanti caratteri dalla fine del secondo content mancano all'ultimo carattere del primo content
+# distance: indica il numero di caratteri tra un content e l'altro
+# depth: dopo il content, indica quanti byte dall'inizio del payload verranno controllati
+# offset: da quale byte il payload verrà controllato per un match, funziona al contrario rispetto a depth
+
+# Characters you cannot use in a content form, without hex notation:
+# "     |22|
+# ;     |3B|
+# :     |3A|
+# |     |7C|
+
+
+
+########################################### IMPORTANTE ###################################################
+
+
+# NB.1 Prima di mettere su i servizi vulnerabili della ctf, cambiare il docker-compose e mettere un ip statico, anziché la subnet.
+# NB.2 Per avere una migliore regola, prima testare con any any -> any <porta_servizio> in modo da vedere poi in /var/log/suricata/fast.log quale indirizzo è stato individuato nel blocco traffico
+
+
+# block XSS with </script> tag
+alert http $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS (msg:"Script tag in URI, possible XSS attempt"; flow:to_server,established; content:"</script>"; http_uri; nocase; classtype:web-application-attack; sid: 2009714; rev: 5;)
+
+# Block UNION SQL injection (regola più inefficiente)
+alert http $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS (msg:"ET WEB_SERVER Possible SQL Injection Attempt UNION SELECT"; flow:established,to_server; content:"UNION"; http_uri; nocase; content:"SELECT"; http_uri; nocase; pcre:"/UNION.+SELECT/Ui"; classtype:web-application-attack; sid:2006446; rev:11;)
+
+# Block OR 1=1  (tested, it works)
+alert http any any -> any 8080 (msg:"OR 1=1 pcre"; content: "OR 1=1"; http_uri; nocase; sid: 100014; rev: 1;)
+
+# Block code injection (in this case netcat -e cmd)
+alert tcp any any -> any 8080 (msg:"netcat command shell switch"; content:"-e cmd"; http_uri; nocase; sid: 1000002;)
+# 
+# Block robots.txt access
+alert http $EXTERNAL_NET any -> $HTTP_SERVERS any (msg:"WEB_SERVER robots.txt access"; flow:to_server,established; content:"/robots.txt"; http_uri; nocase; classtype:web-application-activity; sid:2101852; rev:5;)
+
+# Block ls -l :D
+alert http any any -> any 8080 (msg:"WEB_SERVER ls -l"; flow:to_server,established; content:"ls -l"; http_uri; nocase; classtype:attempted-recon; sid:2101118; rev:7;)
+
+# Simple LFI Attack (da sistemare)
+alert http $EXTERNAL_NET any -> $HTTP_SERVERS any (msg:"GPL WEB_SERVER unicode directory traversal attempt"; flow:to_server,established; content:"/..%255c.."; nocase; reference:bugtraq,1806; reference:cve,2000-0884; reference:nessus,10537; classtype:web-application-attack; sid:2101945; rev:8;)
+
+# block #!/bin/sh scripts
+# NB no perl regex! Only bytes streams with nc/python and similar stuff on pipe
+alert tcp 10.0.0.1 any -> any 11111 (msg:"block sh-bang"; content: "|23 21 2f 62 69 6e 2f 62 61 73 68|"; sid: 100020; rev: 1;)
+
+
+########################## VECCHIO TEMPLATE MOLTO INEFFICIENTE MA CHE FUNZIONA #####################
+
+# Vecchio template, da ottimizzare (funzionano tutte, ma consumano tanto):
+rejectdst tcp 10.0.0.1 any -> any 80 (msg:"php merda"; pcre: "/php/"; sid: 100010; rev: 1;)
+# Una regola ottimizzata potrebbe essere:
+rejectdst tcp 10.0.0.1 any -> any 80 (msg:"php merda 2"; content:"/php/"; http_uri; nocase; sid: 100010; rev: 2;)
+rejectdst tcp 10.0.0.1 any -> any 80 (msg:"for each"; pcre: "/foreach/i"; sid: 100011; rev: 1;)
+rejectdst tcp 10.0.0.1 any -> any 18080 (msg:"union sql"; pcre: "/union/i"; sid: 100012; rev: 1;)
+rejectdst tcp 10.0.0.1 any -> any 18080 (msg:"Mysql comment"; pcre: "/\+--+\+/"; sid: 100013; rev: 1;)
+
+alert tcp any any -> any 8080 (msg:"ET WEB_SERVER Possible SQL Injection Attempt UNION SELECT"; pcre: "/.*UNION%20ALL%20SELECT.*/"; sid:1000006; rev:73;)
+
+alert tcp any any -> any 8080 (msg:"ET WEB_SERVER Possible SQL Injection Attempt UNION SELECT"; content: "UNION"; sid:1000006; rev:73;)
+
+
