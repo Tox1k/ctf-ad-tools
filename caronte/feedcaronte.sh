@@ -21,4 +21,5 @@ do
 		-H "Content-Type: multipart/form-data" \
 		-F "file=@$FNAME" \
 		-F "flush_all=false";
-	done
+	rm -f $FNAME
+done
