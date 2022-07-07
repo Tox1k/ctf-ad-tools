@@ -33,3 +33,7 @@ ip: http://172.16.1.2:19999
 4. Modificare ogni docker-compose, specificando un indirizzo statico, in modo che se viene riavviato il container, il servizio non cambi IP
 5. `mkdir -p /var/lib/suricata/rules`
 6. `suricata -k none -c /etc/suricata/suricata.yaml` per caricare nuove regole (NB **MAI** interrompere il processo di suricata per troppo tempo, altrimenti i servizi vanno giù)
+
+## Credits
+Original repo:
+[https://git.fuo.fi/fuomag9/docker-stuff-ipv6-ad/](https://git.fuo.fi/fuomag9/docker-stuff-ipv6-ad)
